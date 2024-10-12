@@ -32,7 +32,7 @@ export default function Info({ totalPrice }: InfoProps) {
   return (
     <React.Fragment>
       <Typography variant="h4" gutterBottom>
-        So How Does this Work?
+        Build Your Perfect Mix!
       </Typography>
       <List disablePadding>
         {products.map((product) => (

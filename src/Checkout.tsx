@@ -18,10 +18,15 @@ import Info from "./components/Info.tsx";
 import InfoMobile from "./components/InfoMobile.tsx";
 import PaymentForm from "./components/PaymentForm";
 import Review from "./components/Review.tsx";
-import SitemarkIcon from "./components/SitemarkIcon";
+import SitemarkIcon from "./components/SitemarkIcon.tsx";
 import TemplateFrame from "./TemplateFrame.tsx";
 import { MixSizeDetails, SelectBagSize } from "./components/SelectBagSize.tsx";
-import { MixIns, SelectMixIns } from "./components/SelectMixIns.tsx";
+import {
+  emptyMixInDetails,
+  MixInDetails,
+  MixIns,
+  SelectMixIns,
+} from "./components/SelectMixIns.tsx";
 import Alert from "@mui/material/Alert";
 import { Collapse, Fade, Grow, Mixins } from "@mui/material";
 import {
@@ -29,8 +34,9 @@ import {
   ContactInfo,
   ContactInfoErrorFields,
 } from "./components/ContactInfo.tsx";
-import { FirstPage } from "@mui/icons-material";
-import { flushSync } from "react-dom";
+import Loading from "./components/Loading.tsx";
+import OrderConfirmation from "./components/OrderConfirmation.tsx";
+import { SendOrder } from "./services/SendOrder.ts";
 
 const steps = [
   "Select Bag Size",
@@ -50,10 +56,9 @@ export default function Checkout() {
       price: 0,
       maxMixIns: 0,
     });
-  const [selectedMixIns, setSelectedMixIns] = React.useState<MixIns>({
-    count: 0,
-    mixIns: [],
-  });
+  const [selectedMixIns, setSelectedMixIns] = React.useState<MixInDetails>(
+    JSON.parse(JSON.stringify(emptyMixInDetails))
+  );
   const [contactInfo, setContactInfo] = React.useState<ContactDetails>({
     firstName: "",
     lastName: "",
@@ -70,6 +75,8 @@ export default function Checkout() {
       orderNotes: false,
     });
   const [alert, setAlert] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+  const [orderComplete, setOrderComplete] = React.useState(false);
 
   // This code only runs on the client side, to determine the system color preference
   React.useEffect(() => {
@@ -133,6 +140,7 @@ export default function Checkout() {
   const toggleCustomTheme = () => {
     setShowCustomTheme((prev) => !prev);
   };
+
   const handleNext = () => {
     if (activeStep == 0) {
       if (selectedBagSizeData.size === "") {
@@ -188,29 +196,48 @@ export default function Checkout() {
         return;
       }
     }
+    setAlert("");
     setActiveStep(activeStep + 1);
   };
 
   React.useEffect(() => {
-    if (activeStep == 0 && selectedBagSizeData.size != "") {
-      setAlert("");
-    } else if (activeStep == 1 && selectedMixIns.count !== 0) {
-      setAlert("");
-    }
-
     // refresh selected mix ins whenever bag size option changes
     // to an option with a max option count less than the current selection count
     if (selectedMixIns.count > selectedBagSizeData.maxMixIns) {
-      setSelectedMixIns({
-        count: 0,
-        mixIns: [],
-      });
+      setSelectedMixIns(JSON.parse(JSON.stringify(emptyMixInDetails)));
     }
-  }, [activeStep, selectedBagSizeData, selectedMixIns]);
+  }, [selectedBagSizeData, selectedMixIns]);
+
+  React.useEffect(() => {
+    setAlert("");
+    if (activeStep === steps.length) {
+      setLoading(true);
+
+      //Do API calls here
+      SendOrder(selectedBagSizeData, selectedMixIns, contactInfo)
+        .then((response) => {
+          console.log("Send Order Response: ", response);
+        })
+        .catch((error) => {
+          console.log(error);
+          throw error;
+        })
+        .finally(() => {
+          setOrderComplete(true);
+          setLoading(false);
+        });
+
+      // setTimeout(() => {
+      //   setOrderComplete(true);
+      //   setLoading(false);
+      // }, 5000);
+    }
+  }, [activeStep]);
 
   const handleBack = () => {
     setActiveStep(activeStep - 1);
   };
+
   return (
     <TemplateFrame
       toggleCustomTheme={toggleCustomTheme}
@@ -309,14 +336,6 @@ export default function Checkout() {
                   justifyContent: "space-between",
                 }}
               >
-                <div>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Selected products
-                  </Typography>
-                  <Typography variant="body1">
-                    {activeStep >= 2 ? "$144.97" : "$134.98"}
-                  </Typography>
-                </div>
                 <InfoMobile
                   totalPrice={activeStep >= 2 ? "$144.97" : "$134.98"}
                 />
@@ -358,58 +377,9 @@ export default function Checkout() {
                   </Step>
                 ))}
               </Stepper>
-              {activeStep === steps.length ? (
-                <Stack spacing={2} useFlexGap>
-                  <Typography variant="h1">📦</Typography>
-                  <Typography variant="h5">
-                    Thank you for your order!
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: "text.secondary" }}>
-                    If you have questions or comments, please contact me at the
-                    number below. I look forward to hearing from you!
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{ color: "text.secondary", mb: 0 }}
-                  >
-                    Contact Info
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "text.secondary", mt: "-12px" }}
-                  >
-                    Phone Number: (903) 603-4924 <br />
-                    Email: gmrome97@gmail.com
-                  </Typography>
-
-                  <Typography
-                    variant="body1"
-                    sx={{ color: "text.secondary", mb: 0 }}
-                  >
-                    Delivery Time
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "text.secondary", mt: "-12px" }}
-                  >
-                    1-2 days or when you're available
-                  </Typography>
-
-                  <Typography variant="body1" sx={{ color: "text.secondary" }}>
-                    I accept Zelle, Venmo, Cash App, and Cash for payment
-                  </Typography>
-
-                  <Button
-                    variant="contained"
-                    sx={{
-                      alignSelf: "start",
-                      width: { xs: "100%", sm: "auto" },
-                      mb: { xs: 10 },
-                    }}
-                  >
-                    Back to Home
-                  </Button>
-                </Stack>
+              {loading && <Loading />}
+              {activeStep == steps.length ? (
+                orderComplete && <OrderConfirmation />
               ) : (
                 <React.Fragment>
                   {getStepContent(activeStep)}

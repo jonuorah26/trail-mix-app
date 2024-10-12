@@ -8,7 +8,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { MixSizeDetails } from "./SelectBagSize";
-import { MixIns } from "./SelectMixIns";
+import { MixInDetails, MixIns } from "./SelectMixIns";
 import { ContactDetails } from "./ContactInfo";
 import { Grid2 } from "@mui/material";
 
@@ -22,7 +22,7 @@ const contactInfoFields = [
 
 interface ReviewProps {
   selectedBagSizeData: MixSizeDetails;
-  selectedMixIns: MixIns;
+  selectedMixIns: MixInDetails;
   contactInfo: ContactDetails;
 }
 
@@ -51,7 +51,9 @@ export default function Review({
             primaryTypographyProps={{ variant: "h6" }}
             secondaryTypographyProps={{ variant: "subtitle1" }}
             primary="Selected Mix-Ins"
-            secondary={selectedMixIns.mixIns.join(", ")}
+            secondary={Object.entries(selectedMixIns.mixIns)
+              .flatMap(([category, list]: [string, string[]]) => list)
+              .join(", ")}
           />
         </ListItem>
       </List>
@@ -67,26 +69,29 @@ export default function Review({
             Contact Info
           </Typography>
           <Grid2 container>
-            {contactInfoFields.map((field) => (
-              <React.Fragment key={field.fieldId}>
-                <Stack
-                  direction="column"
-                  spacing={0}
-                  useFlexGap
-                  sx={{ width: "100%", mb: 2 }}
-                >
-                  <Typography
-                    variant="subtitle1"
-                    sx={{ color: "text.secondary" }}
-                  >
-                    {field.label}
-                  </Typography>
-                  <Typography variant="subtitle2">
-                    {contactInfo[field.fieldId]}
-                  </Typography>
-                </Stack>
-              </React.Fragment>
-            ))}
+            {contactInfoFields.map(
+              (field) =>
+                contactInfo[field.fieldId] != "" && (
+                  <React.Fragment key={field.fieldId}>
+                    <Stack
+                      direction="column"
+                      spacing={0}
+                      useFlexGap
+                      sx={{ width: "100%", mb: 2 }}
+                    >
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ color: "text.secondary" }}
+                      >
+                        {field.label}
+                      </Typography>
+                      <Typography variant="subtitle2">
+                        {contactInfo[field.fieldId]}
+                      </Typography>
+                    </Stack>
+                  </React.Fragment>
+                )
+            )}
           </Grid2>
         </div>
       </Stack>

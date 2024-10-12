@@ -5,8 +5,8 @@ import Button from "@mui/material/Button";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 
-import CloseIcon from "@mui/icons-material/Close";
-import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import { InfoIcon, CloseIcon } from "@mui/icons-material";
+import { Avatar } from "@mui/material";
 
 import Info from "./Info.tsx";
 
@@ -22,25 +22,45 @@ export default function InfoMobile({ totalPrice }: InfoProps) {
   };
 
   const DrawerList = (
-    <Box sx={{ width: "auto", px: 3, pb: 3, pt: 8 }} role="presentation">
-      <IconButton
-        onClick={toggleDrawer(false)}
-        sx={{ position: "absolute", right: 8, top: 8 }}
+    <Box
+      sx={{ position: "relative", width: "auto", px: 3, pb: 3, pt: 8 }}
+      role="presentation"
+    >
+      <Box
+        sx={{
+          position: "relative", // Make sure the container is relative for positioning inside it
+          width: "100%",
+          height: "100%",
+        }}
       >
-        <CloseIcon />
-      </IconButton>
-      <Info totalPrice={totalPrice} />
+        <img
+          style={{ width: "20%" }}
+          src="https://trailmyx.com/cdn/shop/files/TrailMyx_Logo.png?v=1725720770&width=600"
+        />
+        <IconButton
+          onClick={toggleDrawer(false)}
+          sx={{ position: "absolute", top: -10, right: -20 }}
+        >
+          <CloseIcon />
+        </IconButton>
+        <Info totalPrice={totalPrice} />
+      </Box>
     </Box>
   );
 
   return (
-    <div>
+    <div style={{ width: "100%" }}>
       <Button
         variant="text"
-        endIcon={<ExpandMoreRoundedIcon />}
+        endIcon={<EndRoundIcon />}
         onClick={toggleDrawer(true)}
+        sx={{ width: "100%", mx: "auto", color: "black" }}
       >
-        View details
+        <img
+          style={{ width: "15%", marginRight: "5%" }}
+          src="https://trailmyx.com/cdn/shop/files/TrailMyx_Logo.png?v=1725720770&width=600"
+        />
+        Build Your Perfect Mix!
       </Button>
       <Drawer open={open} anchor="top" onClose={toggleDrawer(false)}>
         {DrawerList}

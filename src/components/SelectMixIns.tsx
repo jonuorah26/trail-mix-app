@@ -18,8 +18,9 @@ import {
 } from "@mui/material";
 import { setSelectionRange } from "@testing-library/user-event/dist/utils";
 import { MixSizeDetails } from "./SelectBagSize";
+import { Category } from "@mui/icons-material";
 
-const mixIns = {
+const allMixIns: MixIns = {
   Nuts: [
     "Peanuts",
     "Almonds",
@@ -34,7 +35,7 @@ const mixIns = {
     "Pepitas",
     "Hazelnuts",
   ],
-  DriedFruits: [
+  Dried_Fruits: [
     "Raisin",
     "Blueberries",
     "Cranberry",
@@ -66,16 +67,33 @@ const mixIns = {
   ],
 };
 
-export interface MixIns {
+export interface MixInDetails {
   count: number;
-  mixIns: string[];
+  mixIns: MixIns;
+}
+
+export interface MixIns {
+  Nuts: string[];
+  Dried_Fruits: string[];
+  Candy: string[];
+  Miscellaneous: string[];
 }
 
 export interface SelectMixInsProps {
   selectedBagSizeData: MixSizeDetails;
-  selectedMixIns: MixIns;
-  setSelectedMixIns: (mixIns: MixIns) => void;
+  selectedMixIns: MixInDetails;
+  setSelectedMixIns: (mixIns: MixInDetails) => void;
 }
+
+export const emptyMixInDetails: MixInDetails = {
+  count: 0,
+  mixIns: {
+    Nuts: [],
+    Dried_Fruits: [],
+    Candy: [],
+    Miscellaneous: [],
+  },
+};
 
 export function SelectMixIns({
   selectedBagSizeData,
@@ -88,15 +106,26 @@ export function SelectMixIns({
   React.useEffect(() => {
     let checkedBoxes = {};
 
-    selectedMixIns.mixIns.forEach((selectedMixIn) => {
+    let selectedMix: string[] = [];
+    Object.entries(selectedMixIns.mixIns).forEach(
+      ([category, list]: [string, string[]]) => {
+        list.forEach((value) => {
+          selectedMix.push(value);
+        });
+      }
+    );
+
+    selectedMix.forEach((selectedMixIn) => {
       checkedBoxes[selectedMixIn] = true;
     });
 
-    Object.entries(mixIns).forEach(([mixInType, mixIns]) => {
-      mixIns.forEach((mixIn) => {
-        checkedBoxes[mixIn] = checkedBoxes[mixIn] ?? false;
-      });
-    });
+    Object.entries(allMixIns).forEach(
+      ([mixInType, mixIns]: [string, string[]]) => {
+        mixIns.forEach((mixIn) => {
+          checkedBoxes[mixIn] = checkedBoxes[mixIn] ?? false;
+        });
+      }
+    );
 
     setCheckedBoxes(checkedBoxes);
     if (selectedMixIns.count === selectedBagSizeData.maxMixIns) {
@@ -105,33 +134,38 @@ export function SelectMixIns({
   }, []);
 
   const handleChange = (e) => {
-    const selectedMixIn = e.target.value;
+    const selectedMixIn = JSON.parse(e.target.value);
+    const category = Object.keys(selectedMixIn)[0] as keyof MixIns;
+    const mixIn = selectedMixIn[category];
     const checked = e.target.checked;
+    const newMixIns: MixIns = selectedMixIns.mixIns;
 
     if (checked) {
       const mixInCount = ++selectedMixIns.count;
-      const newSelectedMixIns: MixIns = {
+      newMixIns[category].push(mixIn);
+      const newSelectedMixIns: MixInDetails = {
         count: mixInCount,
-        mixIns: [...selectedMixIns.mixIns, selectedMixIn],
+        mixIns: newMixIns,
       };
       setSelectedMixIns(newSelectedMixIns);
-      setCheckedBoxes({ ...checkedBoxes, [selectedMixIn]: true });
+      setCheckedBoxes({ ...checkedBoxes, [mixIn]: true });
 
       if (mixInCount === selectedBagSizeData.maxMixIns) {
         setDisableBoxes(true);
       }
     } else {
       const mixInCount = --selectedMixIns.count;
-      const newSelectedMixIns: MixIns = {
+      newMixIns[category] = newMixIns[category].filter((curr) => {
+        if (curr !== mixIn) {
+          return curr;
+        }
+      });
+      const newSelectedMixIns: MixInDetails = {
         count: mixInCount,
-        mixIns: selectedMixIns.mixIns.filter((mixIn) => {
-          if (mixIn !== selectedMixIn) {
-            return mixIn;
-          }
-        }),
+        mixIns: newMixIns,
       };
       setSelectedMixIns(newSelectedMixIns);
-      setCheckedBoxes({ ...checkedBoxes, [selectedMixIn]: false });
+      setCheckedBoxes({ ...checkedBoxes, [mixIn]: false });
 
       if (mixInCount < selectedBagSizeData.maxMixIns) {
         setDisableBoxes(false);
@@ -145,10 +179,7 @@ export function SelectMixIns({
     });
 
     setCheckedBoxes(checkedBoxes);
-    setSelectedMixIns({
-      count: 0,
-      mixIns: [],
-    });
+    setSelectedMixIns(JSON.parse(JSON.stringify(emptyMixInDetails)));
     setDisableBoxes(false);
   };
 
@@ -176,42 +207,44 @@ export function SelectMixIns({
               />
             )}
           </Grid2>
-          {Object.entries(mixIns).map(([mixInType, mixIns]) => {
-            return (
-              <Grid2
-                sx={{
-                  px: 1,
-                  mb: 5,
-                }}
-                size={{ xs: 12, sm: 6 }}
-              >
-                <Typography variant="h6" sx={{ textAlign: { sm: "left" } }}>
-                  {mixInType}
-                </Typography>
-                <FormGroup>
-                  {mixIns.map((mixIn) => {
-                    return (
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={checkedBoxes[mixIn] ?? false}
-                            value={mixIn}
-                            onChange={(e) => {
-                              handleChange(e);
-                            }}
-                            disabled={
-                              disableBoxes && checkedBoxes[mixIn] == false
-                            }
-                          />
-                        }
-                        label={mixIn}
-                      />
-                    );
-                  })}
-                </FormGroup>
-              </Grid2>
-            );
-          })}
+          {Object.entries(allMixIns).map(
+            ([mixInType, mixIns]: [string, string[]]) => {
+              return (
+                <Grid2
+                  sx={{
+                    px: 1,
+                    mb: 5,
+                  }}
+                  size={{ xs: 12, sm: 6 }}
+                >
+                  <Typography variant="h6" sx={{ textAlign: { sm: "left" } }}>
+                    {mixInType.replaceAll("_", " ")}
+                  </Typography>
+                  <FormGroup>
+                    {mixIns.map((mixIn) => {
+                      return (
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={checkedBoxes[mixIn] ?? false}
+                              value={JSON.stringify({ [mixInType]: mixIn })}
+                              onChange={(e) => {
+                                handleChange(e);
+                              }}
+                              disabled={
+                                disableBoxes && checkedBoxes[mixIn] == false
+                              }
+                            />
+                          }
+                          label={mixIn}
+                        />
+                      );
+                    })}
+                  </FormGroup>
+                </Grid2>
+              );
+            }
+          )}
         </Grid2>
       </Paper>
     </>
