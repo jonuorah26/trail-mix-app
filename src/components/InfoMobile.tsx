@@ -5,7 +5,10 @@ import Button from "@mui/material/Button";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 
-import { InfoIcon, CloseIcon } from "@mui/icons-material";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import CloseIcon from "@mui/icons-material/Close";
+import InfoIcon from "@mui/icons-material/Info";
+
 import { Avatar } from "@mui/material";
 
 import Info from "./Info.tsx";
@@ -52,7 +55,7 @@ export default function InfoMobile({ totalPrice }: InfoProps) {
     <div style={{ width: "100%" }}>
       <Button
         variant="text"
-        endIcon={<EndRoundIcon />}
+        endIcon={<ExpandMoreRoundedIcon />}
         onClick={toggleDrawer(true)}
         sx={{ width: "100%", mx: "auto", color: "black" }}
       >
